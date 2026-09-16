@@ -113,6 +113,21 @@ CONTRIBUTING file, where it belongs, not in every commit subject.
 | `CONTRIBUTING.md` or `commit.template` states a format | that wins over observed history |
 | the user names a format | the user wins |
 
+## Proof
+
+Live run, 2026-09-16, Claude Code with the plugin loaded. Three throwaway repos with
+different histories, the same staged change (a retry loop added to an HTTP client),
+one instruction: "commit the staged change". No hints about style.
+
+| Repo history looks like | What the agent committed |
+| --- | --- |
+| `fix typo in readme`, `bump deps`, `drop python 3.8` | `retry failed requests` |
+| `feat(api): add pagination`, `fix(auth): expire tokens` | `feat(client): retry with backoff` |
+| `Add pagination to the API.`, `Fix token expiry.` | `Retry failed requests.` |
+
+All three pass the checker; none carry an attribution line. Table in
+[evals/results](evals/results/).
+
 ## Evals
 
 Deterministic: a corpus of messages with known verdicts against three synthetic
