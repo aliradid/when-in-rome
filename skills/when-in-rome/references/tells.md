@@ -8,8 +8,8 @@ the hard ones and warns on the soft ones.
 | Tell | Example | Fix |
 | --- | --- | --- |
 | AI attribution trailer | `Co-Authored-By: Claude <noreply@anthropic.com>`, `🤖 Generated with Claude Code` | Delete the line. |
-| Narration | "This commit adds ...", "In this PR we ...", "The following changes ..." | State the change: "add ..." |
-| Conversation leak | "as requested", "per your instructions", "the user asked for" | The message describes the change, not the chat. |
+| Narration | "This commit adds ...", "In this PR we ..." | State the change: "add ..." |
+| Conversation leak | "per your instructions", "as you asked", "the user asked for" | The message describes the change, not the chat. |
 | Stock PR skeleton | `## Summary` + `## Test plan` with checkboxes | Write the body the way merged PRs in the repo are written. |
 
 ## Style tells (fail only when the history is consistent the other way)
@@ -32,6 +32,14 @@ the hard ones and warns on the soft ones.
 | "various improvements", "improvements to overall ..." | Name them, or split the commit. |
 | Tool names (claude, copilot, cursor, codex) | Only when the change is about that tool. |
 | A checkbox test plan | One sentence about what was actually run. |
+| "This change ...", "The following changes ..." | Usually the diff says it; if the why matters, say the why. |
+| "as requested", "as discussed" without a reference | Add the issue or name, or drop it. |
+
+## Exempt
+
+Git's own wording is never judged against the style: `Merge ...`, `Revert "..."`,
+`fixup!`, `squash!`, `amend!`, `Squashed commit`, and GitHub's `Update README.md`
+web commits. Attribution lines are still rejected on them.
 
 ## Not tells
 

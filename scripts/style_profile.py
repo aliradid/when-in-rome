@@ -37,6 +37,9 @@ EMOJI = re.compile(r"[\U0001F300-\U0001FAFF☀-➿]|:[a-z_]+:")
 PAST_TENSE = re.compile(r"^(added|fixed|updated|removed|changed|moved|renamed|refactored|improved|implemented|merged|bumped|cleaned|deleted|replaced|reverted|made|created|dropped|switched|migrated|upgraded|tweaked|adjusted|corrected|introduced|extracted)\b", re.I)
 GERUND = re.compile(r"^\w+ing\b", re.I)
 WORD = re.compile(r"[A-Za-z][A-Za-z'-]*")
+# Messages git or common tooling writes for you. Excluded from the profile and
+# never judged against it.
+GENERATED = re.compile(r"^(Merge |Revert \"|Revert '|fixup! |squash! |amend! |Squashed commit|Initial commit$|Apply suggestions? from code review|Update [\w./-]+\.(md|txt|yml|yaml|json)$)", re.I)
 
 
 def _strip_prefix(subject: str) -> str:
@@ -192,7 +195,8 @@ def profile_subjects(subjects: list[str], bodies: list[str] | None = None, branc
 
 def profile_repo(repo: str = ".", limit: int = 300) -> dict:
     commits = git_commits(repo, limit)
-    human = [c for c in commits if not BOT_AUTHORS.search(c["author"]) and not AI_TRAILER.search(c["body"])]
+    human = [c for c in commits if not BOT_AUTHORS.search(c["author"]) and not AI_TRAILER.search(c["body"])
+             and not GENERATED.match(c["subject"])]
     excluded = len(commits) - len(human)
     prof = profile_subjects([c["subject"] for c in human], [c["body"] for c in human], git_branches(repo))
     prof["excluded_bot_or_ai_commits"] = excluded
@@ -201,11 +205,12 @@ def profile_repo(repo: str = ".", limit: int = 300) -> dict:
 
 
 def subject_limit(p: dict) -> int:
-    """Longest subject that still looks native: the history's 90th percentile, never
-    below 50 (the classic guideline) and never above 72."""
+    """Longest subject that still looks native: the history's 90th percentile, with a
+    floor of 50 (the classic guideline) so thin histories do not over-constrain. No
+    ceiling: if the repo writes long subjects, long subjects are the style."""
     if p.get("count", 0) == 0:
         return 50
-    return max(50, min(72, int(p["subject"]["p90_len"])))
+    return max(50, int(p["subject"]["p90_len"]))
 
 
 def rules_for(p: dict) -> list[str]:

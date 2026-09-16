@@ -3,7 +3,10 @@
 {"id":"attr-3","history":"sentence-period","message":"Fix token expiry.\n\nCo-authored-by: Jane Doe <jane@example.com>","expect":"pass","why":"human co-author is fine"}
 {"id":"narr-1","history":"lowercase-terse","message":"add retry\n\nThis commit adds retry logic to the client.","expect":"fail","why":"narration"}
 {"id":"narr-2","history":"conventional","message":"feat(http): add retry\n\nIn this PR we add retries.","expect":"fail","why":"narration"}
-{"id":"proc-1","history":"lowercase-terse","message":"add retry as requested","expect":"fail","why":"conversation leak"}
+{"id": "proc-1", "history": "lowercase-terse", "message": "add retry as requested", "expect": "pass", "why": "'as requested' alone is a warning, not a failure (humans write it with a reference)"}
+{"id": "proc-2", "history": "lowercase-terse", "message": "add retry per your instructions", "expect": "fail", "why": "conversation leak"}
+{"id": "gen-1", "history": "lowercase-terse", "message": "Merge branch 'feature/x' into main", "expect": "pass", "why": "git-generated merge message is exempt"}
+{"id": "gen-2", "history": "lowercase-terse", "message": "Revert \"add retry to client\"\n\nThis reverts commit abc123.", "expect": "pass", "why": "git-generated revert message is exempt"}
 {"id":"case-1","history":"lowercase-terse","message":"Add retry to client","expect":"fail","why":"capital in lowercase repo"}
 {"id":"case-2","history":"sentence-period","message":"add retry to the client.","expect":"fail","why":"lowercase in capitalised repo"}
 {"id":"case-3","history":"conventional","message":"feat(http): Add retry","expect":"fail","why":"capital after prefix in lowercase repo"}

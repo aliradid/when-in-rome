@@ -56,7 +56,7 @@ class ProfileTests(unittest.TestCase):
     def test_empty_and_limits(self):
         self.assertEqual(profile_subjects([])["count"], 0)
         self.assertEqual(subject_limit({"count": 0}), 50)
-        self.assertEqual(subject_limit(profile_subjects(["x" * 90] * 10)), 72)
+        self.assertEqual(subject_limit(profile_subjects(["x" * 90] * 10)), 90)
         self.assertEqual(subject_limit(profile_subjects(["fix"] * 10)), 50)
 
     def test_samples_are_from_history(self):

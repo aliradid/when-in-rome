@@ -19,7 +19,7 @@ python3 scripts/run_evals.py live --runner claude
 python3 scripts/run_evals.py live --runner codex
 ```
 
-Results land in `evals/results/live-<runner>-<timestamp>/`. Commit the `RESULTS.md`
+The Codex runner uses `--sandbox danger-full-access` because the default sandbox refuses to write `.git`; the repo it runs in is a throwaway under the system temp dir. Results land in `evals/results/live-<runner>-<timestamp>/`. Commit the `RESULTS.md`
 you want to share; transcripts are gitignored.
 
 ## Adding cases

@@ -1,8 +1,8 @@
 - id: when-in-rome
   name: when-in-rome commit message check
   description: Reject commit messages that would not pass as native to this repo (AI attribution, narration, style outliers).
-  entry: python3 scripts/check_message.py -F
-  language: python
+  entry: scripts/check_message.py
+  language: script
   stages: [commit-msg]
   always_run: true
   pass_filenames: true

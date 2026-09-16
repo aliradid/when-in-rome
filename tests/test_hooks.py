@@ -75,6 +75,10 @@ class HookProcessTests(unittest.TestCase):
         self.assertEqual(run_hook("pretooluse.py", {"tool_name": "Read", "tool_input": {"file_path": "x"}}), (0, ""))
         self.assertEqual(run_hook("pretooluse.py", {"tool_name": "Bash", "cwd": str(self.repo), "tool_input": {"command": "git status"}}), (0, ""))
 
+    def test_ignores_commands_that_merely_mention_pr_or_commit(self):
+        for cmd in ["npm run prod", "echo commit", "git log --oneline | grep commit", "gh pr list"]:
+            self.assertEqual(run_hook("pretooluse.py", {"tool_name": "Bash", "cwd": str(self.repo), "tool_input": {"command": cmd}}), (0, ""), cmd)
+
     def test_garbage_input_is_allowed(self):
         proc = subprocess.run([sys.executable, str(ROOT / "hooks" / "pretooluse.py")], input="not json", capture_output=True, text=True)
         self.assertEqual((proc.returncode, proc.stdout), (0, ""))

@@ -39,8 +39,11 @@ class HardRuleTests(unittest.TestCase):
         self.assertTrue(any("Narration" in f for f in r.failures))
 
     def test_process_talk_fails(self):
-        r = check("fix typo as requested", LOWER)
+        r = check("fix typo per your instructions", LOWER)
         self.assertFalse(r.ok)
+        soft = check("fix typo as requested", LOWER)
+        self.assertTrue(soft.ok)
+        self.assertTrue(any("as requested" in w for w in soft.warnings))
 
     def test_marketing_word_is_a_warning(self):
         r = check("add robust retry", LOWER)
@@ -49,6 +52,18 @@ class HardRuleTests(unittest.TestCase):
 
     def test_empty(self):
         self.assertFalse(check("", LOWER).ok)
+
+    def test_git_generated_messages_are_exempt(self):
+        for m in ["Merge branch 'feature' into main", 'Revert "add retry to client"', "fixup! add retry", "Merge pull request #12 from x/y"]:
+            self.assertTrue(check(m, LOWER).ok, m)
+        self.assertFalse(check("Merge branch 'x'\n\nCo-Authored-By: Claude <a@b>", LOWER).ok)
+
+    def test_human_phrases_only_warn(self):
+        for m in ["prompt the user for a name", "add retry as discussed in #12", "fix typo\n\nThis change keeps the old path working."]:
+            r = check(m, LOWER)
+            self.assertTrue(r.ok, (m, r.failures))
+        self.assertFalse(check("add retry per your instructions", LOWER).ok)
+        self.assertFalse(check("add retry\n\nThis commit adds retry.", LOWER).ok)
 
 
 class StyleTests(unittest.TestCase):

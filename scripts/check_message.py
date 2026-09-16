@@ -26,7 +26,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from style_profile import CONVENTIONAL, EMOJI, TICKET, profile_repo, subject_limit  # noqa: E402
+from style_profile import CONVENTIONAL, EMOJI, GENERATED, TICKET, profile_repo, subject_limit  # noqa: E402
 
 AI_ATTRIBUTION = re.compile(
     r"(co-authored-by|generated[- ]by|assisted[- ]by|generated with|made with|written with|authored with|produced with|🤖)"
@@ -34,14 +34,20 @@ AI_ATTRIBUTION = re.compile(
     re.I,
 )
 AI_TOOL_WORD = re.compile(r"\b(claude|chatgpt|copilot|codex|gemini|cursor|windsurf|aider|devin|anthropic|openai)\b", re.I)
-NARRATION = re.compile(r"^\s*(this (commit|change|pr|pull request|patch|update)\b|in this (commit|pr|change)\b|the following changes\b|here('s| is) (a|the)\b)", re.I | re.M)
+# Hard: the message talks about itself as a commit or PR.
+NARRATION = re.compile(r"^\s*(this (commit|pr|pull request)\b|in this (commit|pr|pull request)\b)", re.I | re.M)
+# Soft: humans do write "This change ..." in bodies; flag, don't fail.
+NARRATION_SOFT = re.compile(r"^\s*(this (change|patch|update)\b|the following changes\b|here('s| is) (a|the)\b)", re.I | re.M)
 AI_VOCAB = re.compile(
     r"\b(comprehensive|robust|seamless(ly)?|leverag(e|es|ing)|streamlin(e|es|ed|ing)|utiliz(e|es|ing)|enhanc(e|es|ed|ements?)"
     r"|elevat(e|es|ed)|holistic|cutting-edge|state-of-the-art|ensur(e|es|ing) (that )?(proper|correct|consistent)|various (improvements|enhancements|fixes)"
     r"|improve(ments)? to overall|better (maintainability|readability) and)\b",
     re.I,
 )
-PROCESS_TALK = re.compile(r"\b(as requested|per (your|the) (request|instructions)|as discussed|you asked|the user)\b", re.I)
+# Hard: only phrases that can only come from a chat with the author.
+PROCESS_TALK = re.compile(r"\b(per your (request|instructions)|as you (asked|requested)|you asked (me )?(to|for)|the user (asked|requested|wants|wanted))\b", re.I)
+# Soft: "as requested in #12" and "as discussed" are normal human phrasing.
+PROCESS_TALK_SOFT = re.compile(r"\b(as requested|as discussed)\b", re.I)
 CLAUDE_PR_TEMPLATE = re.compile(r"^##\s*Summary\s*$.*^##\s*Test plan\s*$", re.I | re.M | re.S)
 CHECKBOX_TESTPLAN = re.compile(r"^\s*- \[[ x]\]\s", re.M)
 
@@ -90,6 +96,10 @@ def check(message: str, profile: dict | None = None, kind: str = "commit") -> Re
 
     if not subject:
         return Result(False, ["empty message"], [])
+    if kind == "commit" and GENERATED.match(subject):
+        # git's own wording (merges, reverts, fixups); only attribution is checked.
+        f = [f"AI attribution line: '{m.group(0).strip()[:60]}'. Remove it." for m in [AI_ATTRIBUTION.search(whole)] if m]
+        return Result(not f, f, [])
 
     # Hard failures: machine tells regardless of repo.
     for m in AI_ATTRIBUTION.finditer(whole):
@@ -103,6 +113,10 @@ def check(message: str, profile: dict | None = None, kind: str = "commit") -> Re
         fails.append("Uses the stock '## Summary / ## Test plan' template. Match how PRs in this repo are actually written.")
 
     # Warnings: soft tells.
+    if NARRATION_SOFT.search(whole):
+        warns.append("Reads like a description of the change ('This change ...'); usually the diff says that already.")
+    if PROCESS_TALK_SOFT.search(whole):
+        warns.append("'as requested' / 'as discussed': fine with a reference (#123 or a name), a tell without one.")
     for m in AI_VOCAB.finditer(whole):
         warns.append(f"Marketing word '{m.group(0)}'; say concretely what changed.")
         break
@@ -146,7 +160,8 @@ def check(message: str, profile: dict | None = None, kind: str = "commit") -> Re
             warns.append(f"Body has {len(body_lines)} lines; commits here almost never have a body. Keep it to the subject unless the why is not obvious.")
         if b["ratio"] > 0 and b.get("bullet_ratio", 0) <= 0.2 and bullets >= 3:
             warns.append("Bullet-list body; bodies in this repo are prose.")
-    if subject and body and not message.splitlines()[1:2] == [""] and len(message.splitlines()) > 1 and message.splitlines()[1].strip():
+    all_lines = message.strip("\n").splitlines()
+    if len(all_lines) > 1 and all_lines[1].strip():
         warns.append("No blank line between subject and body.")
 
     return Result(not fails, fails, warns)
@@ -204,7 +219,7 @@ def _core(subject: str) -> str:
 
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("source", nargs="?", help="'-' to read the message from stdin")
+    ap.add_argument("source", nargs="?", help="'-' for stdin, or a file path (what git and pre-commit pass)")
     ap.add_argument("-m", "--message")
     ap.add_argument("-F", "--file")
     ap.add_argument("--pr", action="store_true", help="check a PR title/body instead of a commit")
@@ -226,8 +241,10 @@ def main(argv: list[str]) -> int:
         message = Path(a.file).read_text(encoding="utf-8", errors="replace")
     elif a.source == "-":
         message = sys.stdin.read()
+    elif a.source and Path(a.source).is_file():
+        message = Path(a.source).read_text(encoding="utf-8", errors="replace")
     else:
-        ap.error("give -m, -F, --pr, or '-' for stdin")
+        ap.error("give -m, -F FILE, a file path, --pr, or '-' for stdin")
 
     # Ignore git's commented-out lines in COMMIT_EDITMSG.
     message = "\n".join(ln for ln in message.splitlines() if not ln.startswith("#"))

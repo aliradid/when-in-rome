@@ -37,7 +37,8 @@ def install(repo: str) -> Path:
     script = (
         "#!/bin/sh\n"
         f"{MARK}\n"
-        f'python3 "{CHECK}" -F "$1" --repo "$(git rev-parse --show-toplevel)" || {{\n'
+        'if command -v python3 >/dev/null 2>&1; then PY=python3; else PY=python; fi\n'
+        f'"$PY" "{CHECK}" -F "$1" --repo "$(git rev-parse --show-toplevel)" || {{\n'
         '  echo "when-in-rome: fix the message above, or bypass once with --no-verify" >&2\n'
         "  exit 1\n"
         "}\n"

@@ -115,7 +115,7 @@ def main() -> int:
     if data.get("tool_name") != "Bash":
         return 0
     command = (data.get("tool_input") or {}).get("command") or ""
-    if "commit" not in command and "pr" not in command:
+    if not re.search(r"\bgit\b[^|;&]*\bcommit\b|\bgh\s+pr\s+(create|edit)\b", command):
         return 0
     try:
         found = extract_messages(command)

@@ -121,7 +121,7 @@ RUNNERS = {
     ],
     "codex": lambda repo: [
         "codex", "exec", "--ephemeral", "--ignore-user-config", "--skip-git-repo-check",
-        "--sandbox", "workspace-write", "-o", str(repo / ".wir-out.md"),
+        "--sandbox", "danger-full-access", "-o", str(repo / ".wir-out.md"),
         "Follow this skill exactly, then do the task.\n\n<skill>\n"
         + (ROOT / "skills" / "when-in-rome" / "SKILL.md").read_text(encoding="utf-8").split("---", 2)[2].strip()
         + "\n</skill>\n\nTask: commit the staged change in this repo with an appropriate commit message. Do not push.",

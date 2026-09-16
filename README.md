@@ -100,14 +100,17 @@ Same check, four more places:
 
 **Hard, anywhere:** AI attribution lines (`Co-Authored-By: Claude`, `Generated with`,
 the robot emoji), narration ("This commit ...", "In this PR ..."), conversation leaks
-("as requested", "the user asked"), the stock `## Summary / ## Test plan` skeleton.
+("per your instructions", "the user asked for"), the stock `## Summary / ## Test plan`
+skeleton. Git's own messages (merges, reverts, fixups) are exempt from everything but
+the attribution check.
 
 **Style, only where the history is consistent the other way:** first-letter case,
 subject length past the repo's 90th percentile, type prefixes present or missing,
 trailing period, past tense, emoji.
 
-**Warnings:** marketing words (comprehensive, robust, seamless, leverage, enhance,
-streamline), tool names, checkbox test plans, a long body in a repo that never writes
+**Warnings, never blocking:** marketing words (comprehensive, robust, seamless,
+leverage, enhance, streamline), "This change ..." bodies, "as requested" without a
+reference, tool names, checkbox test plans, a long body in a repo that never writes
 them.
 
 Details and before/after examples: [tells.md](skills/when-in-rome/references/tells.md),
@@ -125,7 +128,11 @@ histories, the same staged change (a retry loop in an HTTP client), one instruct
 | `feat(api): add pagination`, `fix(auth): expire tokens` | `feat(client): retry with backoff` |
 | `Add pagination to the API.`, `Fix token expiry.` | `Retry failed requests.` |
 
-Deterministic corpus: 27/27. Unit tests: 62. This repo's CI runs the checker over its
+The GitHub Action, on this repo's own [pull request #1](https://github.com/aliradid/when-in-rome/pull/1):
+a deliberately bad commit (`feat:` prefix, capital, period, narration, Claude trailer)
+failed the check; the plain PR title and body passed.
+
+Deterministic corpus: 30/30. Unit tests: 65. This repo's CI runs the checker over its
 own history on every push, so it can never drift.
 
 ## Why not just a template?
