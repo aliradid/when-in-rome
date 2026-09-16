@@ -8,21 +8,23 @@
   <a href="https://github.com/aliradid/when-in-rome/actions/workflows/ci.yml"><img src="https://github.com/aliradid/when-in-rome/actions/workflows/ci.yml/badge.svg" alt="ci"></a>
   <a href="https://github.com/aliradid/when-in-rome/actions/workflows/plugin-load-check.yml"><img src="https://github.com/aliradid/when-in-rome/actions/workflows/plugin-load-check.yml/badge.svg" alt="plugin loads"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT"></a>
-  <img src="https://img.shields.io/badge/deps-python3%20%2B%20git-lightgrey" alt="no dependencies">
+  <img src="https://img.shields.io/badge/needs-python%203.8%2B%20and%20git-lightgrey" alt="needs python 3.8+ and git">
 </p>
 
-Your git history knows which commits the AI wrote. `feat:` prefix, capital letter,
-a bullet-list body, a `Co-Authored-By: Claude` trailer, sitting between `fix typo` and
-`bump deps`. when-in-rome reads the repo's own history, makes the agent write like the
-humans who work there, and blocks the commits and PRs that would stand out.
+Agent-written commits are easy to spot in a `git log`: a `feat:` prefix, a capital
+letter, a bullet-list body and a `Co-Authored-By: Claude` trailer, sitting between
+`fix typo` and `bump deps`. when-in-rome reads the repo's own history, has the agent
+write the way the people in that history write, and blocks the commits and PRs that
+would stand out.
 
 ```bash
 claude plugin marketplace add aliradid/when-in-rome
 claude plugin install when-in-rome@when-in-rome
 ```
 
-Also a git hook, a pre-commit hook, and a GitHub Action. Codex, Cursor, Gemini CLI,
-OpenCode and the rest: [INSTALL.md](INSTALL.md).
+The same check is available as a plain git `commit-msg` hook, a pre-commit hook and a
+GitHub Action, and the skill installs on Codex, Cursor, Gemini CLI, OpenCode and
+others. All routes are in [INSTALL.md](INSTALL.md). Needs Python 3.8+ and git.
 
 ## Audit your repo first
 
@@ -46,12 +48,15 @@ when-in-rome audit of .
     ...
 ```
 
-That is one of the author's own repos, before this tool existed. Post yours.
+That is one of the author's own repos after six months of agent commits, and the
+reason this tool exists. Scores from other repos are welcome in
+[Discussions](https://github.com/aliradid/when-in-rome/discussions).
 
 ## How it works
 
-**1. It reads the room.** `style_profile.py` looks at the last 300 human commits, skipping
-bots and anything with an AI trailer, and reports what the history is consistent about:
+**1. Profile the history.** `style_profile.py` reads the last 300 commits, keeps the
+ones written by people (bots and commits with an AI trailer are dropped), and reports
+what that history is consistent about:
 
 ```
 House style from 214 human commits (confidence: high):
@@ -77,8 +82,8 @@ uses Conventional Commits gets Conventional Commits. A repo that writes
 **2. The agent writes in it.** The skill says: profile first, then write the subject in
 the repo's voice with the first words the history uses; body only when the repo does;
 one logical change per commit; branch names shaped like `git branch -a`; PR bodies
-shaped like the repo's merged PRs. Never narration, never attribution, never a stock
-template. The house style is also injected at session start, so the agent knows it
+shaped like the repo's merged PRs. No narration, no attribution lines, no stock
+template. The house style is also injected at session start, so the agent has it
 before it touches anything.
 
 **3. What doesn't pass gets blocked.** A Claude Code PreToolUse hook checks every
@@ -109,18 +114,19 @@ subject length past the repo's 90th percentile, type prefixes present or missing
 trailing period, past tense, emoji.
 
 **Warnings, never blocking:** marketing words (comprehensive, robust, seamless,
-leverage, enhance, streamline), "This change ..." bodies, "as requested" without a
-reference, tool names, checkbox test plans, a long body in a repo that never writes
-them.
+leverage, enhance, streamline, utilize), "This change ..." bodies, "as requested"
+without a reference, tool names, checkbox test plans, a long body in a repo that never
+writes them.
 
 Details and before/after examples: [tells.md](skills/when-in-rome/references/tells.md),
 [examples.md](skills/when-in-rome/references/examples.md).
 
-## Proof
+## Does it work?
 
-Live run, Claude Code with the plugin loaded. Three throwaway repos with different
-histories, the same staged change (a retry loop in an HTTP client), one instruction:
-"commit the staged change". No hints about style.
+One live run per history, Claude Code with the plugin loaded. Three throwaway repos
+with different histories, the same staged change (a retry loop in an HTTP client), and
+the instruction "commit the staged change". The instruction says nothing about style;
+the plugin's session-start hook handed the agent the profile, which is the point.
 
 | Repo history looks like | What the agent committed |
 | --- | --- |
@@ -133,14 +139,13 @@ a deliberately bad commit (`feat:` prefix, capital, period, narration, Claude tr
 failed the check; the plain PR title and body passed.
 
 Deterministic corpus: 30/30. Unit tests: 65. This repo's CI runs the checker over its
-own history on every push, so it can never drift.
+own history on every push, so its own commits stay native.
 
 ## Why not just a template?
 
-Every commit-message tool on GitHub generates Conventional Commits. That is a template,
-and a template is exactly what gives machine-written history away. Humans don't write
-to a template; they write like the people around them. The right format for a repo is
-whatever its `git log` already says it is.
+The commit-message generators I could find all produce Conventional Commits, and a
+fixed format is exactly what gives machine-written history away. The right format for
+a repo is whatever its `git log` already uses.
 
 ## Is this about hiding AI use?
 
@@ -154,9 +159,9 @@ the PR description or `CONTRIBUTING.md`, where it belongs, not in every commit s
 | | |
 | --- | --- |
 | `/when-in-rome` | invoke the skill explicitly |
-| `stop when-in-rome` | off for the session |
+| `stop when-in-rome` | the skill stops guiding; the hook keeps checking |
 | `WHEN_IN_ROME_OFF=1` | disables the hooks for a shell |
-| `WHEN_IN_ROME_AUTOFIX=1` | fix mechanical tells in place instead of bouncing |
+| `WHEN_IN_ROME_AUTOFIX=1` | fix mechanical tells in place instead of bouncing (`git commit -m` only) |
 | `CONTRIBUTING.md` or `commit.template` states a format | that wins over observed history |
 | the user names a format | the user wins |
 
@@ -173,10 +178,11 @@ scripts/install_git_hook.py       git commit-msg hook installer
 hooks/                            Claude Code PreToolUse + SessionStart hooks
 action.yml                        GitHub Action
 .pre-commit-hooks.yaml            pre-commit hook
-evals/                            histories, message corpus, live runner
+evals/                            histories, message corpus, results
+scripts/run_evals.py              deterministic and live eval runner
 ```
 
-No dependencies beyond Python 3 and git.
+Needs Python 3.8+ and git; nothing else.
 
 ## Contributing
 

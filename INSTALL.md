@@ -1,6 +1,8 @@
 # Install
 
-Every route loads the same `skills/when-in-rome/SKILL.md`. The Claude Code and OpenCode
+Needs Python 3.8+ and git (on Windows, Git for Windows; use `python` where these docs
+say `python3` if that is what your install provides). Every route loads the same
+`skills/when-in-rome/SKILL.md`. The Claude Code and OpenCode
 routes also get the enforcement hook that blocks commits and PRs which would not pass
 as native. On other platforms the skill guides the agent and you can install the git
 commit-msg hook for enforcement.
@@ -16,7 +18,8 @@ That's it. From the next session, every `git commit` and `gh pr create` the agen
 is checked against the repo's history first, and the house style is shown to the agent
 at session start. `/when-in-rome` invokes the skill explicitly. Set
 `WHEN_IN_ROME_OFF=1` to disable the hooks for a shell, or `WHEN_IN_ROME_AUTOFIX=1` to
-have mechanical problems (attribution lines, case, period, prefix) fixed in place.
+have mechanical problems (attribution lines, case, period, prefix) fixed in place;
+autofix applies to `git commit -m` messages, other forms and PRs still bounce back.
 
 ## Git commit-msg hook (any tool, any agent)
 
@@ -57,10 +60,13 @@ leaks, the stock PR template), which is the right setting for other people's PRs
 ```yaml
 repos:
   - repo: https://github.com/aliradid/when-in-rome
-    rev: v1.1.0
+    rev: v1.1.1
     hooks:
       - id: when-in-rome
 ```
+
+Then `pre-commit install --hook-type commit-msg`; the hook runs at the commit-msg
+stage, which the default `pre-commit install` does not enable.
 
 ## Audit a repo
 

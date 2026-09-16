@@ -17,7 +17,7 @@ runs:
     - name: Fetch base branch
       if: github.event_name == 'pull_request'
       shell: bash
-      run: git -C "$GITHUB_WORKSPACE" fetch --no-tags --depth=200 origin "${{ github.event.pull_request.base.ref }}"
+      run: git -C "$GITHUB_WORKSPACE" fetch --no-tags origin "${{ github.event.pull_request.base.ref }}"
     - name: Check commits and PR text
       if: github.event_name == 'pull_request'
       shell: bash

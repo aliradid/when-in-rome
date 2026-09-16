@@ -21,7 +21,7 @@ the hard ones and warns on the soft ones.
 | Trailing period | absent | Match the repo. |
 | Past tense ("Added", "Fixed") | imperative | "add", "fix". |
 | Emoji | absent | Drop it unless the repo uses gitmoji. |
-| Long subject | under 50 chars | Cut the category words; keep the noun. |
+| Long subject | under the repo's 90th percentile (floor 50) | Cut the category words; keep the noun. |
 | Bullet-list body in a repo with no bodies | subject only | Delete the body or keep one sentence of why. |
 
 ## Soft tells (warnings)

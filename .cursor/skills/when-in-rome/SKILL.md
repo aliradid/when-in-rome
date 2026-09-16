@@ -18,8 +18,8 @@ metadata:
 # when-in-rome
 
 A commit message is read by the people who maintain the repo, months later, in a
-`git log` next to their own. It should look like one of theirs. Not shorter, not
-longer, not more formal, not decorated. Theirs.
+`git log` next to their own. It should look like one of theirs: same length, same
+formality, same decoration, which usually means none.
 
 ## Why this exists
 
@@ -27,12 +27,13 @@ Agents write commit messages the way they were trained to write everything: capi
 first letter, a type prefix, a full descriptive sentence, a bullet-list body, and an
 attribution trailer. Almost no human history looks like that. The mismatch is how
 reviewers spot machine-written commits at a glance, and it makes the history harder to
-read. The fix is not a better template. It is reading the room.
+read. A better template does not fix that; matching the existing history does.
 
 ## Persistence
 
 Once invoked, these rules apply to every commit, branch and PR for the rest of the
-session. Turn them off only when the user says "stop when-in-rome".
+session. Turn them off only when the user says "stop when-in-rome". The PreToolUse
+hook, if installed, keeps checking regardless; `WHEN_IN_ROME_OFF=1` disables it.
 
 ## Before you write anything
 
@@ -42,7 +43,7 @@ Read the history. If the plugin is installed, run:
 python3 "${CLAUDE_PLUGIN_ROOT}/scripts/style_profile.py" --repo .
 ```
 
-It prints the house style as rules plus real subjects from the repo. If the script is
+(`python` instead of `python3` on Windows.) It prints the house style as rules plus real subjects from the repo. If the script is
 not available, do it by hand: `git log --no-merges -n 40 --format='%s'` and read the
 subjects; `git log --no-merges -n 15 --format='%B---'` to see whether bodies exist and
 what they look like. Skip bot commits (dependabot, renovate, github-actions) and any
@@ -51,8 +52,8 @@ commit carrying an AI trailer; the profile is the humans.
 Note what the history is consistent about. Only those things are rules:
 
 - **Case**: lowercase first letter, or capital?
-- **Length**: typical subject length; stay under the repo's 90th percentile (never
-  below 50, never above 72).
+- **Length**: typical subject length; stay under the repo's 90th percentile (with a
+  floor of 50 for thin histories).
 - **Prefixes**: `feat:`/`fix:` Conventional Commits, an area prefix like `parser:`, a
   `[tag]`, a ticket id, or nothing.
 - **Period**: does the subject end with one?
@@ -81,8 +82,8 @@ sentence case, no period, no prefix, body only when the why is not obvious.
    emoji, no tool names, unless the change is genuinely about that tool. Keep human
    co-author trailers the user asks for.
 5. **No marketing words.** "comprehensive", "robust", "seamless", "leverage",
-   "enhance", "streamline" do not appear in human commit messages. Say the concrete
-   thing.
+   "enhance", "streamline", "utilize" rarely appear in human commit messages. Say the
+   concrete thing.
 6. **One logical change per commit.** If the diff mixes a fix, a refactor and a
    formatting pass, commit them separately, in the order a reviewer would want to read
    them. Never bundle "and also" work into one message.
