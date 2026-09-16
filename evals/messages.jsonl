@@ -1,0 +1,27 @@
+{"id":"attr-1","history":"lowercase-terse","message":"fix typo\n\nCo-Authored-By: Claude <noreply@anthropic.com>","expect":"fail","why":"AI trailer"}
+{"id":"attr-2","history":"conventional","message":"fix(auth): expire tokens\n\n🤖 Generated with Claude Code","expect":"fail","why":"generated-with line"}
+{"id":"attr-3","history":"sentence-period","message":"Fix token expiry.\n\nCo-authored-by: Jane Doe <jane@example.com>","expect":"pass","why":"human co-author is fine"}
+{"id":"narr-1","history":"lowercase-terse","message":"add retry\n\nThis commit adds retry logic to the client.","expect":"fail","why":"narration"}
+{"id":"narr-2","history":"conventional","message":"feat(http): add retry\n\nIn this PR we add retries.","expect":"fail","why":"narration"}
+{"id":"proc-1","history":"lowercase-terse","message":"add retry as requested","expect":"fail","why":"conversation leak"}
+{"id":"case-1","history":"lowercase-terse","message":"Add retry to client","expect":"fail","why":"capital in lowercase repo"}
+{"id":"case-2","history":"sentence-period","message":"add retry to the client.","expect":"fail","why":"lowercase in capitalised repo"}
+{"id":"case-3","history":"conventional","message":"feat(http): Add retry","expect":"fail","why":"capital after prefix in lowercase repo"}
+{"id":"prefix-1","history":"lowercase-terse","message":"feat: add retry","expect":"fail","why":"prefix in plain repo"}
+{"id":"prefix-2","history":"conventional","message":"add retry to client","expect":"fail","why":"missing prefix"}
+{"id":"period-1","history":"lowercase-terse","message":"add retry to client.","expect":"fail","why":"period in no-period repo"}
+{"id":"period-2","history":"sentence-period","message":"Add retry to the client","expect":"fail","why":"missing period"}
+{"id":"tense-1","history":"lowercase-terse","message":"added retry to client","expect":"fail","why":"past tense"}
+{"id":"emoji-1","history":"lowercase-terse","message":"✨ add retry to client","expect":"fail","why":"emoji"}
+{"id":"len-1","history":"lowercase-terse","message":"add comprehensive retry logic with exponential backoff to the http client for resilience","expect":"fail","why":"too long"}
+{"id":"ok-1","history":"lowercase-terse","message":"add retry to client","expect":"pass","why":"native"}
+{"id":"ok-2","history":"lowercase-terse","message":"fix crash on empty file","expect":"pass","why":"native"}
+{"id":"ok-3","history":"conventional","message":"feat(http): add retry with backoff","expect":"pass","why":"native"}
+{"id":"ok-4","history":"conventional","message":"fix(cli): handle missing config\n\nThe default path was never created on first run.","expect":"pass","why":"native with body"}
+{"id":"ok-5","history":"sentence-period","message":"Retry requests on 5xx responses.","expect":"pass","why":"native"}
+{"id":"ok-6","history":"sentence-period","message":"Add a timeout to the client.\n\nRequests could hang forever when the upstream stalled.","expect":"pass","why":"native with body"}
+{"id":"ok-7","history":"lowercase-terse","message":"bump version","expect":"pass","why":"native"}
+{"id":"ok-8","history":"conventional","message":"chore(release): 2.4.0","expect":"pass","why":"native release"}
+{"id":"pr-1","history":"lowercase-terse","kind":"pr","message":"add retry to client\n\n## Summary\n- added retry\n\n## Test plan\n- [ ] unit tests\n- [ ] manual\n- [ ] ci","expect":"fail","why":"stock template"}
+{"id":"pr-2","history":"lowercase-terse","kind":"pr","message":"add retry to client\n\nRetries 5xx three times with backoff. Tested against staging during a deploy.","expect":"pass","why":"plain PR"}
+{"id":"pr-3","history":"conventional","kind":"pr","message":"feat(http): add retry\n\nRetries 5xx three times with backoff.\n\n🤖 Generated with Claude Code","expect":"fail","why":"attribution in PR"}

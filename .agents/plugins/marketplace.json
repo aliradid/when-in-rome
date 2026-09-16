@@ -1,0 +1,21 @@
+{
+  "name": "when-in-rome",
+  "interface": {
+    "displayName": "When in Rome"
+  },
+  "plugins": [
+    {
+      "name": "when-in-rome",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/aliradid/when-in-rome.git",
+        "ref": "main"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

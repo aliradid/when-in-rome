@@ -1,0 +1,50 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Unit tests
+        run: python -m unittest discover -s tests -v
+      - name: Evals
+        run: |
+          python scripts/run_evals.py validate
+          python scripts/run_evals.py run
+
+  cursor-mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          cmp skills/when-in-rome/SKILL.md .cursor/skills/when-in-rome/SKILL.md || {
+            echo "::error::.cursor copy is out of sync. Run: cp skills/when-in-rome/SKILL.md .cursor/skills/when-in-rome/SKILL.md"
+            exit 1
+          }
+
+  own-history:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Every commit in this repo passes its own checker
+        run: |
+          set -e
+          for sha in $(git rev-list --no-merges HEAD); do
+            git log -1 --format=%B "$sha" | python scripts/check_message.py - --repo . || { echo "::error::commit $sha fails the house-style check"; exit 1; }
+          done

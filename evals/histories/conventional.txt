@@ -1,0 +1,20 @@
+feat(api): add pagination
+fix(auth): expire tokens after 24h
+chore: bump deps
+docs: update readme
+refactor(db): split queries
+test: cover empty input
+ci: cache node_modules
+fix: handle null user
+feat: add dark mode
+perf(parser): avoid copies
+fix(ui): align buttons
+chore(release): 2.3.0
+feat(cli): add --json flag
+fix(api): 500 on empty body
+docs(api): document pagination
+refactor: extract client
+test(auth): token expiry
+ci: add windows runner
+feat(db): connection pooling
+fix: crash on empty file

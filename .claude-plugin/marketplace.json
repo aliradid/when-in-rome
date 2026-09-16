@@ -1,0 +1,18 @@
+{
+  "$schema": "https://www.schemastore.org/claude-code-marketplace.json",
+  "name": "when-in-rome",
+  "description": "Commits, branches and PRs that match the repo's own history. No AI attribution lines.",
+  "owner": {
+    "name": "aliradid",
+    "url": "https://github.com/aliradid"
+  },
+  "plugins": [
+    {
+      "name": "when-in-rome",
+      "description": "Reads the repo's commit history and makes the agent write in that house style; blocks commits and PRs that would stand out.",
+      "source": "./",
+      "category": "workflow",
+      "keywords": ["git", "commits", "pull-requests", "house-style"]
+    }
+  ]
+}

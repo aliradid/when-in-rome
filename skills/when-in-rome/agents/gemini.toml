@@ -1,0 +1,18 @@
+# Gemini CLI custom command for when-in-rome.
+# Install: copy to ~/.gemini/commands/when-in-rome.toml, then type /when-in-rome.
+# Self-contained; the canonical, fuller ruleset lives in skills/when-in-rome/SKILL.md.
+
+description = "Write commits, branch names and PR text in this repo's own house style. No AI attribution."
+
+prompt = """
+When in Rome, commit as the Romans do. For the rest of this session, before any git commit, branch name, or pull request, read the repository's own history and match it.
+
+1. Read: `git log --no-merges -n 40 --format='%s'` and `git log --no-merges -n 15 --format='%B---'`. Ignore bot commits and any commit with an AI trailer. Note what the history is consistent about: lowercase or capital first letter, typical length, feat:/fix: or area prefixes or none, trailing period or not, imperative or past tense, whether bodies exist and what they look like, branch naming, and how merged PRs are written (`gh pr list --state merged --limit 10`, `gh pr view`).
+2. Write: the subject says what changed in the repo's voice, using the first words the history uses. Body only if the history has bodies or the why is not obvious, and then explain why, not what. One logical change per commit. Branch names and PR text follow the repo's observed patterns.
+3. Never: AI attribution lines (Co-Authored-By: Claude, Generated with ...), narration ("This commit ...", "In this PR ..."), conversation leaks ("as requested"), marketing words (comprehensive, robust, seamless, leverage, enhance, streamline), emoji the repo does not use, the stock "## Summary / ## Test plan" skeleton, tool names, --no-verify, or claims that tests passed unless you ran them.
+4. If the repo has a CONTRIBUTING.md or commit template stating a format, that wins over observed history. If the user gives a format, the user wins.
+
+Before committing, confirm the subject would sit unnoticed in this repo's `git log --oneline`. "stop when-in-rome" turns this off.
+
+{{args}}
+"""

@@ -1,0 +1,20 @@
+fix typo in readme
+bump deps
+add retry to fetch
+remove dead code
+handle empty input
+fix flaky test
+update ci image
+drop python 3.8
+rename config key
+speed up parser
+fix off by one in pager
+add --json flag
+cache token lookups
+fix crash on empty file
+tidy imports
+add windows to ci
+bump version
+fix link in docs
+handle utf-8 bom
+add timeout to client

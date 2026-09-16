@@ -1,0 +1,7 @@
+interface:
+  display_name: "When in Rome"
+  short_description: "Commit and PR messages that match the repo's own history"
+  default_prompt: "Use $when-in-rome: read this repo's git history and write the commit message in its house style, with no AI attribution."
+
+policy:
+  allow_implicit_invocation: true

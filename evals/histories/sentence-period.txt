@@ -1,0 +1,20 @@
+Add pagination to the API.
+Fix token expiry.
+Bump dependencies.
+Update the README.
+Split database queries.
+Cover the empty-input case.
+Cache node_modules in CI.
+Handle a null user.
+Add dark mode.
+Avoid copies in the parser.
+Align the buttons.
+Release 2.3.0.
+Add a --json flag.
+Return 400 on an empty body.
+Document pagination.
+Extract the client.
+Test token expiry.
+Add a Windows runner.
+Pool database connections.
+Fix a crash on an empty file.
