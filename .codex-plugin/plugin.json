@@ -1,6 +1,6 @@
 {
   "name": "when-in-rome",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Commit as the Romans do. Reads the repo's git history and makes the agent's commits, branch names and PR text match the house style. No AI attribution lines, no narration, no stock templates.",
   "author": {
     "name": "aliradid",
@@ -9,7 +9,13 @@
   "homepage": "https://github.com/aliradid/when-in-rome",
   "repository": "https://github.com/aliradid/when-in-rome",
   "license": "MIT",
-  "keywords": ["git", "commits", "pull-requests", "house-style", "codex"],
+  "keywords": [
+    "git",
+    "commits",
+    "pull-requests",
+    "house-style",
+    "codex"
+  ],
   "skills": "./skills/",
   "interface": {
     "displayName": "When in Rome",
@@ -17,7 +23,9 @@
     "longDescription": "Reads the repository's git history, derives the house style (case, length, prefixes, mood, bodies, branch names, PR shape) and writes the agent's commits, branches and PR text to match. Never adds AI attribution lines. Ships a checker you can install as a git commit-msg hook.",
     "developerName": "aliradid",
     "category": "Productivity",
-    "capabilities": ["Instructions"],
+    "capabilities": [
+      "Instructions"
+    ],
     "websiteURL": "https://github.com/aliradid/when-in-rome",
     "defaultPrompt": [
       "Use when-in-rome to commit these changes.",

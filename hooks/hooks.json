@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/pretooluse.py\"",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/pretooluse.py\" 2>/dev/null || python \"${CLAUDE_PLUGIN_ROOT}/hooks/pretooluse.py\" 2>/dev/null || true",
             "timeout": 20,
             "statusMessage": "when-in-rome: checking commit message against house style..."
           }
@@ -19,7 +19,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/sessionstart.py\"",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/sessionstart.py\" 2>/dev/null || python \"${CLAUDE_PLUGIN_ROOT}/hooks/sessionstart.py\" 2>/dev/null || true",
             "timeout": 20,
             "statusMessage": "when-in-rome: reading commit history..."
           }

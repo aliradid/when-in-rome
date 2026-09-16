@@ -1,6 +1,6 @@
 {
   "name": "when-in-rome",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Commits, branch names and PR text that match the repo's own history. No AI attribution lines.",
   "skills": "skills"
 }

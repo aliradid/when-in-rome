@@ -15,7 +15,8 @@ claude plugin install when-in-rome@when-in-rome
 That's it. From the next session, every `git commit` and `gh pr create` the agent runs
 is checked against the repo's history first, and the house style is shown to the agent
 at session start. `/when-in-rome` invokes the skill explicitly. Set
-`WHEN_IN_ROME_OFF=1` to disable the hooks for a shell.
+`WHEN_IN_ROME_OFF=1` to disable the hooks for a shell, or `WHEN_IN_ROME_AUTOFIX=1` to
+have mechanical problems (attribution lines, case, period, prefix) fixed in place.
 
 ## Git commit-msg hook (any tool, any agent)
 
@@ -28,6 +29,44 @@ python3 ~/.when-in-rome/scripts/install_git_hook.py --repo /path/to/your/repo
 
 Remove with `--uninstall`. An existing commit-msg hook is kept as
 `commit-msg.pre-when-in-rome` and restored on uninstall.
+
+## GitHub Action (fail PRs with AI tells)
+
+```yaml
+# .github/workflows/when-in-rome.yml
+name: when-in-rome
+on: [pull_request]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: aliradid/when-in-rome@v1
+        # with:
+        #   hard-only: "false"     # also enforce the repo's observed style
+        #   check-pr-body: "true"
+```
+
+By default it fails only on hard tells (attribution lines, narration, conversation
+leaks, the stock PR template), which is the right setting for other people's PRs.
+
+## pre-commit
+
+```yaml
+repos:
+  - repo: https://github.com/aliradid/when-in-rome
+    rev: v1.1.0
+    hooks:
+      - id: when-in-rome
+```
+
+## Audit a repo
+
+```bash
+python3 ~/.when-in-rome/scripts/audit_history.py --repo /path/to/repo
+```
 
 ## Codex
 

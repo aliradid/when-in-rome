@@ -1,0 +1,34 @@
+name: when-in-rome
+description: Fail pull requests whose commits or description carry AI tells (attribution lines, narration, stock templates) or stand out from the repo's own commit style.
+author: aliradid
+branding:
+  icon: git-commit
+  color: orange
+inputs:
+  hard-only:
+    description: Only fail on hard tells (attribution, narration, conversation leaks, stock PR template). Set to "false" to also enforce the repo's observed style.
+    default: "true"
+  check-pr-body:
+    description: Also check the pull request title and body.
+    default: "true"
+runs:
+  using: composite
+  steps:
+    - name: Fetch base branch
+      if: github.event_name == 'pull_request'
+      shell: bash
+      run: git -C "$GITHUB_WORKSPACE" fetch --no-tags --depth=200 origin "${{ github.event.pull_request.base.ref }}"
+    - name: Check commits and PR text
+      if: github.event_name == 'pull_request'
+      shell: bash
+      env:
+        PR_TITLE: ${{ github.event.pull_request.title }}
+        PR_BODY: ${{ github.event.pull_request.body }}
+      run: |
+        set -e
+        BODY_FILE="$RUNNER_TEMP/pr-body.md"
+        printf '%s' "$PR_BODY" > "$BODY_FILE"
+        ARGS=(--repo "$GITHUB_WORKSPACE" --base "origin/${{ github.event.pull_request.base.ref }}" --head HEAD --github)
+        [ "${{ inputs.hard-only }}" = "true" ] && ARGS+=(--hard-only)
+        [ "${{ inputs.check-pr-body }}" = "true" ] && ARGS+=(--pr-title "$PR_TITLE" --pr-body-file "$BODY_FILE")
+        python3 "${{ github.action_path }}/scripts/check_range.py" "${ARGS[@]}"

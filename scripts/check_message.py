@@ -152,6 +152,49 @@ def check(message: str, profile: dict | None = None, kind: str = "commit") -> Re
     return Result(not fails, fails, warns)
 
 
+ATTRIBUTION_LINE = re.compile(
+    r"^\s*(🤖.*|(co-authored-by|generated[- ]by|assisted[- ]by)\s*:.*\b(claude|copilot|chatgpt|gpt|openai|codex|gemini|cursor|windsurf|devin|aider|anthropic)\b.*|.*generated with (claude|copilot|chatgpt|codex|gemini|cursor|windsurf|aider).*)$",
+    re.I | re.M,
+)
+
+
+def fix_message(message: str, profile: dict | None = None) -> str:
+    """Apply the mechanical fixes only: drop AI attribution lines, match the repo's
+    case, trailing period, and prefix habit. Narration, length and wording are left
+    for the author; there is no safe automatic rewrite for those."""
+    profile = profile or {"count": 0}
+    lines = [ln for ln in message.strip("\n").splitlines() if not ATTRIBUTION_LINE.match(ln)]
+    while lines and not lines[-1].strip():
+        lines.pop()
+    if not lines:
+        return ""
+    subject, rest = lines[0].strip(), lines[1:]
+    s = profile.get("subject") if profile.get("count", 0) > 0 else None
+    if s:
+        if s["conventional_ratio"] <= 0.2 and CONVENTIONAL.match(subject):
+            subject = CONVENTIONAL.sub("", subject, count=1).strip()
+        if s["trailing_period_ratio"] <= 0.2 and subject.endswith("."):
+            subject = subject.rstrip(".").rstrip()
+        elif s["trailing_period_ratio"] >= 0.8 and not subject.endswith("."):
+            subject = subject + "."
+        m = re.search(r"[A-Za-z]", _core(subject))
+        if m:
+            idx = subject.find(_core(subject)) + m.start()
+            ch = subject[idx]
+            word = re.match(r"[A-Za-z][A-Za-z'-]*", subject[idx:]).group(0)
+            if not (word.isupper() and len(word) > 1):
+                if s["lower_ratio"] >= 0.8 and ch.isupper():
+                    subject = subject[:idx] + ch.lower() + subject[idx + 1:]
+                elif s["upper_ratio"] >= 0.8 and ch.islower():
+                    subject = subject[:idx] + ch.upper() + subject[idx + 1:]
+    out = [subject]
+    if rest:
+        if rest[0].strip():
+            out.append("")
+        out += rest
+    return "\n".join(out).rstrip("\n")
+
+
 def _core(subject: str) -> str:
     core = CONVENTIONAL.sub("", subject, count=1)
     core = re.sub(r"^\[[^\]]{1,30}\]\s*", "", core)
@@ -170,6 +213,7 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--repo", default=".")
     ap.add_argument("--profile", help="JSON profile file (skips reading git history)")
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--fix", action="store_true", help="print the message with mechanical fixes applied and exit 0")
     a = ap.parse_args(argv[1:])
 
     if a.pr:
@@ -188,6 +232,9 @@ def main(argv: list[str]) -> int:
     # Ignore git's commented-out lines in COMMIT_EDITMSG.
     message = "\n".join(ln for ln in message.splitlines() if not ln.startswith("#"))
     profile = json.loads(Path(a.profile).read_text(encoding="utf-8")) if a.profile else profile_repo(a.repo)
+    if a.fix:
+        print(fix_message(message, profile))
+        return 0
     r = check(message, profile, kind="pr" if a.pr else "commit")
     if a.json:
         print(json.dumps(r.as_dict(), indent=2))

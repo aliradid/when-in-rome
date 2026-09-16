@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="506" viewBox="0 0 980 506" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
+<rect width="980" height="506" rx="10" fill="#0d1117" stroke="#30363d"/>
+<circle cx="22" cy="22" r="6" fill="#ff5f56"/><circle cx="42" cy="22" r="6" fill="#ffbd2e"/><circle cx="62" cy="22" r="6" fill="#27c93f"/>
+<text x="490.0" y="27" text-anchor="middle" fill="#8b949e" font-size="12">when-in-rome — PreToolUse hook</text>
+<text x="24" y="64" fill="#e6edf3" xml:space="preserve">$ git commit -m &quot;feat: Add Comprehensive Retry Logic to HTTP Client.&quot;</text>
+<text x="24" y="86" fill="#e6edf3" xml:space="preserve">      ... 🤖 Generated with Claude Code</text>
+<text x="24" y="108" fill="#e6edf3" xml:space="preserve">      ... Co-Authored-By: Claude &lt;noreply@anthropic.com&gt;</text>
+<text x="24" y="152" fill="#ff7b72" xml:space="preserve">when-in-rome blocked this because the message would not pass as one of this repo&#x27;s own:</text>
+<text x="24" y="174" fill="#ff7b72" xml:space="preserve">- [commit] AI attribution line: &#x27;Co-Authored-By: Claude&#x27;. Remove it.</text>
+<text x="24" y="196" fill="#ff7b72" xml:space="preserve">- [commit] Subject starts with a capital; this repo writes lowercase subjects.</text>
+<text x="24" y="218" fill="#ff7b72" xml:space="preserve">- [commit] Conventional Commits prefix (feat:) but this repo does not use them.</text>
+<text x="24" y="240" fill="#ff7b72" xml:space="preserve">- [commit] Trailing period on the subject; this repo does not use one.</text>
+<text x="24" y="262" fill="#d29922" xml:space="preserve">- [commit] (warning) Marketing word &#x27;comprehensive&#x27;; say concretely what changed.</text>
+<text x="24" y="284" fill="#8b949e" xml:space="preserve">House style from the history:</text>
+<text x="24" y="306" fill="#8b949e" xml:space="preserve">- Subjects start lowercase (94% of history).</text>
+<text x="24" y="328" fill="#8b949e" xml:space="preserve">- Typical subject is 31 characters; stay under 52.</text>
+<text x="24" y="350" fill="#8b949e" xml:space="preserve">- No feat:/fix:/chore: prefixes. No trailing period. Imperative mood.</text>
+<text x="24" y="372" fill="#8b949e" xml:space="preserve">- Bodies are rare (12%): usually subject only.</text>
+<text x="24" y="394" fill="#8b949e" xml:space="preserve">Real subjects from this repo: fix off by one in pager | add --json flag | drop python 3.8</text>
+<text x="24" y="438" fill="#e6edf3" xml:space="preserve">$ git commit -m &quot;retry http client on 5xx&quot;</text>
+<text x="24" y="460" fill="#3fb950" xml:space="preserve">[main 3f2a9c1] retry http client on 5xx</text>
+</svg>

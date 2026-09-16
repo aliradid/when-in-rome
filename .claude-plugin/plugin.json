@@ -1,7 +1,7 @@
 {
   "name": "when-in-rome",
   "displayName": "When in Rome",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Commit as the Romans do. Reads the repo's git history and makes the agent's commits, branch names and PR text match the house style. Blocks AI attribution lines, narration and stock templates before they land.",
   "author": {
     "name": "aliradid",
@@ -10,5 +10,12 @@
   "homepage": "https://github.com/aliradid/when-in-rome",
   "repository": "https://github.com/aliradid/when-in-rome",
   "license": "MIT",
-  "keywords": ["git", "commits", "pull-requests", "house-style", "workflow", "skills"]
+  "keywords": [
+    "git",
+    "commits",
+    "pull-requests",
+    "house-style",
+    "workflow",
+    "skills"
+  ]
 }

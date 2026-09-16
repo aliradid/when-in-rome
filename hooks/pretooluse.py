@@ -137,11 +137,33 @@ def main() -> int:
     for kind, message in found:
         r = check(message, profile, kind=kind)
         if not r.ok:
-            problems.append((kind, r))
+            problems.append((kind, r, message))
     if not problems:
         return 0
+
+    # Optional autofix: when every problem is mechanical (attribution, case, period,
+    # prefix), rewrite the command in place instead of bouncing it back.
+    if os.environ.get("WHEN_IN_ROME_AUTOFIX"):
+        try:
+            from check_message import fix_message
+            new_command = command
+            all_fixed = True
+            for kind, r, message in problems:
+                fixed = fix_message(message, profile)
+                if kind != "commit" or not fixed or not check(fixed, profile).ok or new_command.count(message) != 1:
+                    all_fixed = False
+                    break
+                new_command = new_command.replace(message, fixed, 1)
+            if all_fixed and new_command != command:
+                # No permissionDecision: the normal permission flow still applies to
+                # the rewritten command; only the message text changes.
+                print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse",
+                                  "updatedInput": {"command": new_command}}}))
+                return 0
+        except Exception:  # noqa: BLE001
+            pass
     lines = ["when-in-rome blocked this because the message would not pass as one of this repo's own:"]
-    for kind, r in problems:
+    for kind, r, _message in problems:
         for f in r.failures:
             lines.append(f"- [{kind}] {f}")
         for w in r.warnings:
