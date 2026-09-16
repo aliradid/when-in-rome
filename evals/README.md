@@ -19,7 +19,7 @@ python3 scripts/run_evals.py live --runner claude
 python3 scripts/run_evals.py live --runner codex
 ```
 
-The Codex runner uses `--sandbox danger-full-access` because the default sandbox refuses to write `.git`; the repo it runs in is a throwaway under the system temp dir. Results land in `evals/results/live-<runner>-<timestamp>/`. Commit the `RESULTS.md`
+The Codex runner passes `--dangerously-bypass-approvals-and-sandbox`: Codex's sandbox refuses to write `.git` (even with `allow_git_writes`), so a commit is impossible inside it. The repo it works in is a throwaway created under the system temp dir and deleted afterwards. Results land in `evals/results/live-<runner>-<timestamp>/`. Commit the `RESULTS.md`
 you want to share; transcripts are gitignored.
 
 ## Adding cases

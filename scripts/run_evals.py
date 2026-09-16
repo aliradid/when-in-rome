@@ -93,7 +93,8 @@ def cmd_run(_a) -> int:
 
 
 def make_repo(subjects: list[str]) -> Path:
-    d = Path(tempfile.mkdtemp(prefix="wir-live-"))
+    # Real path, not a symlinked temp dir: sandboxes decide what is writable by path.
+    d = Path(tempfile.mkdtemp(prefix="wir-live-", dir=os.path.realpath(tempfile.gettempdir())))
     env = dict(os.environ, GIT_AUTHOR_NAME="Dev One", GIT_AUTHOR_EMAIL="dev@example.com",
                GIT_COMMITTER_NAME="Dev One", GIT_COMMITTER_EMAIL="dev@example.com")
     subprocess.run(["git", "init", "-q", "-b", "main", str(d)], check=True, env=env)
@@ -121,7 +122,7 @@ RUNNERS = {
     ],
     "codex": lambda repo: [
         "codex", "exec", "--ephemeral", "--ignore-user-config", "--skip-git-repo-check",
-        "--sandbox", "danger-full-access", "-o", str(repo / ".wir-out.md"),
+        "--dangerously-bypass-approvals-and-sandbox", "-o", str(repo / ".wir-out.md"),
         "Follow this skill exactly, then do the task.\n\n<skill>\n"
         + (ROOT / "skills" / "when-in-rome" / "SKILL.md").read_text(encoding="utf-8").split("---", 2)[2].strip()
         + "\n</skill>\n\nTask: commit the staged change in this repo with an appropriate commit message. Do not push.",
@@ -142,7 +143,8 @@ def cmd_live(a) -> int:
         print(f"[{a.runner}] {name} ...", flush=True)
         try:
             proc = subprocess.run(RUNNERS[a.runner](repo), cwd=str(repo), capture_output=True, text=True,
-                                  encoding="utf-8", errors="replace", timeout=a.timeout)
+                                  encoding="utf-8", errors="replace", timeout=a.timeout,
+                                  stdin=subprocess.DEVNULL, env={**os.environ, "GIT_EDITOR": "true"})
             transcript = proc.stdout + "\n--- stderr ---\n" + proc.stderr
         except subprocess.TimeoutExpired:
             transcript = "TIMEOUT"

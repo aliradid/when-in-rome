@@ -123,16 +123,17 @@ Details and before/after examples: [tells.md](skills/when-in-rome/references/tel
 
 ## Does it work?
 
-One live run per history, Claude Code with the plugin loaded. Three throwaway repos
-with different histories, the same staged change (a retry loop in an HTTP client), and
-the instruction "commit the staged change". The instruction says nothing about style;
-the plugin's session-start hook handed the agent the profile, which is the point.
+One live run per history and runner. Three throwaway repos with different histories,
+the same staged change (a retry loop in an HTTP client), and the instruction "commit
+the staged change". The instruction says nothing about style. Claude Code had the
+plugin loaded, so its session-start hook handed over the profile; Codex had only the
+skill text in its prompt and read the history itself.
 
-| Repo history looks like | What the agent committed |
-| --- | --- |
-| `fix typo in readme`, `bump deps`, `drop python 3.8` | `retry failed requests` |
-| `feat(api): add pagination`, `fix(auth): expire tokens` | `feat(client): retry with backoff` |
-| `Add pagination to the API.`, `Fix token expiry.` | `Retry failed requests.` |
+| Repo history looks like | Claude Code committed | Codex committed |
+| --- | --- | --- |
+| `fix typo in readme`, `bump deps`, `drop python 3.8` | `retry failed requests` | `add retry to client` |
+| `feat(api): add pagination`, `fix(auth): expire tokens` | `feat(client): retry with backoff` | `fix: retry failed requests` |
+| `Add pagination to the API.`, `Fix token expiry.` | `Retry failed requests.` | `Retry failed requests.` |
 
 The GitHub Action, on this repo's own [pull request #2](https://github.com/aliradid/when-in-rome/pull/2):
 a deliberately bad commit (`feat:` prefix, capital, period, narration, Claude trailer)
