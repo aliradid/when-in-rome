@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.1.1] — 2026-09-16
+
+Fixes from a pre-release review.
+
+- GitHub Action: fetch the pull request commits and the base history explicitly, so it
+  works on the default shallow checkout (before, it checked only the merge commit).
+- Regexes made linear on whitespace-heavy bodies; messages are scanned up to 8 KB, so a
+  crafted commit can no longer push the hook past its timeout.
+- Hook parsing: env prefixes, `git -C`/`-c` global options, `-m"attached"`, `-F -` with
+  a heredoc; stdin-only messages the hook cannot read are refused rather than allowed;
+  `-F` paths resolve against the session's working directory.
+- Attribution: tool names must be the whole name or a tool email host, so people named
+  Devin or Claude pass; `Signed-off-by`/`Reviewed-by`/`Helped-by` tool trailers,
+  "Generated with AI", "AI-generated" and more agent names are caught.
+- Case checks skip identifiers (iOS, GitHub, npm, 3D, UTF-8); `fix_message` no longer
+  rewrites them. Emoji detection no longer matches `std::mem::take` or a check mark.
+- Merge, revert, reapply, fixup and squash messages are exempt from style checks.
+- "the user wants ..." and "as discussed" are warnings, not failures.
+- `#` lines are stripped only when reading a file, so PR bodies and `-m` keep them.
+- Bot commits are skipped in CI ranges; history samples are quoted as data.
+- pre-commit hook uses `language: script`; docs say to install the commit-msg stage.
+
 ## [1.1.0] — 2026-09-16
 
 - `audit_history.py`: scan any repo and get a native score, tell counts and the

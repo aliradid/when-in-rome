@@ -10,7 +10,7 @@ description: |
 license: MIT
 allowed-tools: Bash(git log *), Bash(git branch *), Bash(git rev-parse *), Bash(gh pr list *), Bash(gh pr view *), Bash(python3 *)
 metadata:
-  version: "1.1.0"
+  version: "1.1.1"
   tags: "git, commits, pull requests, house style, code review, workflow"
   category: "workflow"
 ---

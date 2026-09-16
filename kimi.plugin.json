@@ -1,6 +1,6 @@
 {
   "name": "when-in-rome",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Commits, branch names and PR text that match the repo's own history. No AI attribution lines.",
   "license": "MIT",
   "homepage": "https://github.com/aliradid/when-in-rome",
