@@ -22,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_message import check  # noqa: E402
 from style_profile import BOT_AUTHORS, profile_repo  # noqa: E402
 
-HARD_MARKERS = ("attribution", "Narration", "Talks about", "Summary / ## Test plan")
+HARD_MARKERS = ("attribution", "Narration", "Talks to", "Summary / ## Test plan")
 
 
 def commits_in_range(repo: str, base: str, head: str) -> list[tuple[str, str]]:

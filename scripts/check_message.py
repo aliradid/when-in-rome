@@ -92,7 +92,7 @@ def check(message: str, profile: dict | None = None, kind: str = "commit") -> Re
     if NARRATION.search(whole):
         fails.append("Narration ('This commit ...', 'In this PR ...'). Say what changed, not that a change is being described.")
     if PROCESS_TALK.search(whole):
-        fails.append("Talks about the request or the user ('as requested', 'the user'). Commit messages describe the change, not the conversation.")
+        fails.append("Talks to the person who asked ('per your instructions', 'as you asked'). Commit messages describe the change, not the conversation.")
     if kind == "pr" and CLAUDE_PR_TEMPLATE.search(body):
         fails.append("Uses the stock '## Summary / ## Test plan' template. Match how PRs in this repo are actually written.")
 

@@ -134,11 +134,11 @@ the plugin's session-start hook handed the agent the profile, which is the point
 | `feat(api): add pagination`, `fix(auth): expire tokens` | `feat(client): retry with backoff` |
 | `Add pagination to the API.`, `Fix token expiry.` | `Retry failed requests.` |
 
-The GitHub Action, on this repo's own [pull request #1](https://github.com/aliradid/when-in-rome/pull/1):
+The GitHub Action, on this repo's own [pull request #2](https://github.com/aliradid/when-in-rome/pull/2):
 a deliberately bad commit (`feat:` prefix, capital, period, narration, Claude trailer)
-failed the check; the plain PR title and body passed.
+failed the check with each tell listed; the plain PR title and body passed.
 
-Deterministic corpus: 30/30. Unit tests: 65. This repo's CI runs the checker over its
+Deterministic corpus: 30/30. Unit tests: 79. This repo's CI runs the checker over its
 own history on every push, so its own commits stay native.
 
 ## Why not just a template?

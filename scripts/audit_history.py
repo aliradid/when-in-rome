@@ -49,7 +49,7 @@ def audit(repo: str = ".", limit: int = 500) -> dict:
         style = []
         if has_baseline:
             r = check(msg, profile)
-            style = [f for f in r.failures if not any(k in f for k in ("attribution", "Narration", "Talks about"))]
+            style = [f for f in r.failures if not any(k in f for k in ("attribution", "Narration", "Talks to"))]
         if style:
             reasons.append("style outlier"); tells["style outlier"] += 1
         if reasons:
