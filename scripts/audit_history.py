@@ -20,15 +20,15 @@ from collections import Counter
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from check_message import AI_ATTRIBUTION, AI_VOCAB, NARRATION, PROCESS_TALK, check  # noqa: E402
-from style_profile import BOT_AUTHORS, git_commits, profile_subjects  # noqa: E402
+from check_message import AI_VOCAB, NARRATION, PROCESS_TALK, check  # noqa: E402
+from style_profile import BOT_AUTHORS, git_commits, has_ai_attribution, profile_subjects  # noqa: E402
 
 
 def audit(repo: str = ".", limit: int = 500) -> dict:
     commits = git_commits(repo, limit)
     humans = [c for c in commits if not BOT_AUTHORS.search(c["author"])]
     # Profile from commits that carry no attribution, so the tools can't set the norm.
-    clean = [c for c in humans if not AI_ATTRIBUTION.search(c["body"])]
+    clean = [c for c in humans if not has_ai_attribution(c["body"])]
     profile = profile_subjects([c["subject"] for c in clean], [c["body"] for c in clean])
     # With fewer than five clean commits there is no human baseline; count hard
     # tells only, so an all-agent history is not judged against itself.
@@ -38,7 +38,7 @@ def audit(repo: str = ".", limit: int = 500) -> dict:
     for c in humans:
         msg = c["subject"] + ("\n\n" + c["body"] if c["body"] else "")
         reasons = []
-        if AI_ATTRIBUTION.search(msg):
+        if has_ai_attribution(msg):
             reasons.append("attribution"); tells["attribution"] += 1
         if NARRATION.search(msg):
             reasons.append("narration"); tells["narration"] += 1

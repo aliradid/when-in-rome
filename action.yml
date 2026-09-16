@@ -11,24 +11,41 @@ inputs:
   check-pr-body:
     description: Also check the pull request title and body.
     default: "true"
+  history-depth:
+    description: How many base-branch commits to profile for the house style.
+    default: "300"
 runs:
   using: composite
   steps:
-    - name: Fetch base branch
+    - name: Fetch the pull request commits and the base history
       if: github.event_name == 'pull_request'
       shell: bash
-      run: git -C "$GITHUB_WORKSPACE" fetch --no-tags origin "${{ github.event.pull_request.base.ref }}"
+      env:
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        PR_COMMITS: ${{ github.event.pull_request.commits }}
+        BASE_REF: ${{ github.event.pull_request.base.ref }}
+        DEPTH: ${{ inputs.history-depth }}
+      run: |
+        set -e
+        cd "$GITHUB_WORKSPACE"
+        # Works on the default shallow checkout: fetch every PR commit plus its parent,
+        # and enough of the base branch to profile the house style.
+        git fetch --no-tags --depth="$((PR_COMMITS + 1))" origin "+refs/pull/${PR_NUMBER}/head:refs/remotes/wir/head"
+        git fetch --no-tags --depth="$DEPTH" origin "+refs/heads/${BASE_REF}:refs/remotes/wir/base"
     - name: Check commits and PR text
       if: github.event_name == 'pull_request'
       shell: bash
       env:
         PR_TITLE: ${{ github.event.pull_request.title }}
         PR_BODY: ${{ github.event.pull_request.body }}
+        HARD_ONLY: ${{ inputs.hard-only }}
+        CHECK_BODY: ${{ inputs.check-pr-body }}
       run: |
         set -e
+        cd "$GITHUB_WORKSPACE"
         BODY_FILE="$RUNNER_TEMP/pr-body.md"
         printf '%s' "$PR_BODY" > "$BODY_FILE"
-        ARGS=(--repo "$GITHUB_WORKSPACE" --base "origin/${{ github.event.pull_request.base.ref }}" --head HEAD --github)
-        [ "${{ inputs.hard-only }}" = "true" ] && ARGS+=(--hard-only)
-        [ "${{ inputs.check-pr-body }}" = "true" ] && ARGS+=(--pr-title "$PR_TITLE" --pr-body-file "$BODY_FILE")
+        ARGS=(--repo "$GITHUB_WORKSPACE" --base wir/base --head wir/head --profile-ref wir/base --github)
+        [ "$HARD_ONLY" = "true" ] && ARGS+=(--hard-only)
+        [ "$CHECK_BODY" = "true" ] && ARGS+=(--pr-title "$PR_TITLE" --pr-body-file "$BODY_FILE")
         python3 "${{ github.action_path }}/scripts/check_range.py" "${ARGS[@]}"

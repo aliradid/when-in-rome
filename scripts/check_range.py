@@ -20,13 +20,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_message import check  # noqa: E402
-from style_profile import profile_repo  # noqa: E402
+from style_profile import BOT_AUTHORS, profile_repo  # noqa: E402
 
 HARD_MARKERS = ("attribution", "Narration", "Talks about", "Summary / ## Test plan")
 
 
 def commits_in_range(repo: str, base: str, head: str) -> list[tuple[str, str]]:
-    out = subprocess.run(["git", "-C", repo, "log", "--no-merges", "--format=%H%x1f%B%x1e", f"{base}..{head}"],
+    out = subprocess.run(["git", "-C", repo, "log", "--no-merges", "--format=%H%x1f%an%x1f%B%x1e", f"{base}..{head}"],
                          capture_output=True, text=True, encoding="utf-8", errors="replace")
     if out.returncode != 0:
         raise SystemExit(f"git log failed: {out.stderr.strip()}")
@@ -34,7 +34,12 @@ def commits_in_range(repo: str, base: str, head: str) -> list[tuple[str, str]]:
     for rec in out.stdout.split("\x1e"):
         if not rec.strip():
             continue
-        sha, _, msg = rec.strip("\n").partition("\x1f")
+        parts = rec.strip("\n").split("\x1f", 2)
+        if len(parts) < 3:
+            continue
+        sha, author, msg = parts
+        if BOT_AUTHORS.search(author):
+            continue
         res.append((sha.strip(), msg.strip("\n")))
     return res
 
@@ -48,9 +53,10 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--pr-body-file")
     ap.add_argument("--hard-only", action="store_true")
     ap.add_argument("--github", action="store_true")
+    ap.add_argument("--profile-ref", help="ref whose history defines the house style (default: HEAD)")
     a = ap.parse_args(argv[1:])
 
-    profile = profile_repo(a.repo)
+    profile = profile_repo(a.repo, ref=a.profile_ref) if a.profile_ref else profile_repo(a.repo)
     failed = 0
 
     def report(what: str, failures: list[str]):

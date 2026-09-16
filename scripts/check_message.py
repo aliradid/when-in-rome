@@ -26,18 +26,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from style_profile import CONVENTIONAL, EMOJI, GENERATED, TICKET, profile_repo, subject_limit  # noqa: E402
+from style_profile import COMMON_VERBS, CONVENTIONAL, EMOJI, GENERATED, MAX_SCAN, TICKET, first_word_case, has_ai_attribution, profile_repo, subject_limit  # noqa: E402
 
-AI_ATTRIBUTION = re.compile(
-    r"(co-authored-by|generated[- ]by|assisted[- ]by|generated with|made with|written with|authored with|produced with|🤖)"
-    r".{0,40}\b(claude|copilot|chatgpt|gpt|openai|codex|gemini|cursor|windsurf|devin|aider|anthropic|ai assistant|ai-assisted|an ai|llm)\b",
-    re.I,
-)
-AI_TOOL_WORD = re.compile(r"\b(claude|chatgpt|copilot|codex|gemini|cursor|windsurf|aider|devin|anthropic|openai)\b", re.I)
+AI_TOOL_WORD = re.compile(r"\b(claude|chatgpt|copilot|codex|gemini|windsurf|aider|devin|anthropic|openai)\b", re.I)
 # Hard: the message talks about itself as a commit or PR.
-NARRATION = re.compile(r"^\s*(this (commit|pr|pull request)\b|in this (commit|pr|pull request)\b)", re.I | re.M)
+NARRATION = re.compile(r"^[ \t]*(this (commit|pr|pull request)\b|in this (commit|pr|pull request)\b)", re.I | re.M)
 # Soft: humans do write "This change ..." in bodies; flag, don't fail.
-NARRATION_SOFT = re.compile(r"^\s*(this (change|patch|update)\b|the following changes\b|here('s| is) (a|the)\b)", re.I | re.M)
+NARRATION_SOFT = re.compile(r"^[ \t]*(this (change|patch|update)\b|the following changes\b|here('s| is) (a|the)\b)", re.I | re.M)
 AI_VOCAB = re.compile(
     r"\b(comprehensive|robust|seamless(ly)?|leverag(e|es|ing)|streamlin(e|es|ed|ing)|utiliz(e|es|ing)|enhanc(e|es|ed|ements?)"
     r"|elevat(e|es|ed)|holistic|cutting-edge|state-of-the-art|ensur(e|es|ing) (that )?(proper|correct|consistent)|various (improvements|enhancements|fixes)"
@@ -45,11 +40,11 @@ AI_VOCAB = re.compile(
     re.I,
 )
 # Hard: only phrases that can only come from a chat with the author.
-PROCESS_TALK = re.compile(r"\b(per your (request|instructions)|as you (asked|requested)|you asked (me )?(to|for)|the user (asked|requested|wants|wanted))\b", re.I)
+PROCESS_TALK = re.compile(r"\b(per your (request|instructions)|as you (asked|requested)|you asked (me )?(to|for))\b", re.I)
 # Soft: "as requested in #12" and "as discussed" are normal human phrasing.
-PROCESS_TALK_SOFT = re.compile(r"\b(as requested|as discussed)\b", re.I)
+PROCESS_TALK_SOFT = re.compile(r"\b(as requested|as discussed|the user (asked|requested) (me |us )?(to|for))\b", re.I)
 CLAUDE_PR_TEMPLATE = re.compile(r"^##\s*Summary\s*$.*^##\s*Test plan\s*$", re.I | re.M | re.S)
-CHECKBOX_TESTPLAN = re.compile(r"^\s*- \[[ x]\]\s", re.M)
+CHECKBOX_TESTPLAN = re.compile(r"^[ \t]*- \[[ x]\][ \t]", re.M)
 
 
 @dataclass
@@ -71,24 +66,12 @@ def split_message(message: str) -> tuple[str, str]:
     return subject, body
 
 
-def _first_word_case(subject: str) -> str | None:
-    core = CONVENTIONAL.sub("", subject, count=1)
-    core = re.sub(r"^\[[^\]]{1,30}\]\s*", "", core)
-    core = re.sub(r"^[A-Za-z][A-Za-z0-9_./-]{1,24}:\s+", "", core)
-    core = re.sub(r"^\s*[A-Z][A-Z0-9]{1,9}-\d+[:\s-]+", "", core)
-    m = re.search(r"[A-Za-z]", core)
-    if not m:
-        return None
-    ch = core[m.start()]
-    word = re.match(r"[A-Za-z][A-Za-z'-]*", core[m.start():]).group(0)
-    if word.isupper() and len(word) > 1:
-        return None
-    return "upper" if ch.isupper() else "lower"
 
 
 def check(message: str, profile: dict | None = None, kind: str = "commit") -> Result:
     """kind: 'commit' or 'pr'. For 'pr', message is title + blank line + body."""
     profile = profile or {"count": 0}
+    message = message[:MAX_SCAN]
     subject, body = split_message(message)
     fails: list[str] = []
     warns: list[str] = []
@@ -98,13 +81,14 @@ def check(message: str, profile: dict | None = None, kind: str = "commit") -> Re
         return Result(False, ["empty message"], [])
     if kind == "commit" and GENERATED.match(subject):
         # git's own wording (merges, reverts, fixups); only attribution is checked.
-        f = [f"AI attribution line: '{m.group(0).strip()[:60]}'. Remove it." for m in [AI_ATTRIBUTION.search(whole)] if m]
+        m = has_ai_attribution(whole)
+        f = [f"AI attribution line: '{m.group(0).strip()[:60]}'. Remove it."] if m else []
         return Result(not f, f, [])
 
     # Hard failures: machine tells regardless of repo.
-    for m in AI_ATTRIBUTION.finditer(whole):
+    m = has_ai_attribution(whole)
+    if m:
         fails.append(f"AI attribution line: '{m.group(0).strip()[:60]}'. Remove it; the history has no such lines.")
-        break
     if NARRATION.search(whole):
         fails.append("Narration ('This commit ...', 'In this PR ...'). Say what changed, not that a change is being described.")
     if PROCESS_TALK.search(whole):
@@ -120,7 +104,7 @@ def check(message: str, profile: dict | None = None, kind: str = "commit") -> Re
     for m in AI_VOCAB.finditer(whole):
         warns.append(f"Marketing word '{m.group(0)}'; say concretely what changed.")
         break
-    if AI_TOOL_WORD.search(whole) and not AI_ATTRIBUTION.search(whole):
+    if AI_TOOL_WORD.search(whole) and not m:
         warns.append("Mentions an AI tool by name. Fine only if the change is genuinely about that tool.")
     if kind == "pr" and CHECKBOX_TESTPLAN.search(body) and len(CHECKBOX_TESTPLAN.findall(body)) >= 3:
         warns.append("Checkbox test plan; most human PRs describe how it was tested in a sentence.")
@@ -132,10 +116,10 @@ def check(message: str, profile: dict | None = None, kind: str = "commit") -> Re
     if len(subject) > limit:
         fails.append(f"Subject is {len(subject)} chars; this repo stays under {limit}.")
     if s:
-        case = _first_word_case(subject)
+        case = first_word_case(subject)
         if s["lower_ratio"] >= 0.8 and case == "upper":
             fails.append("Subject starts with a capital; this repo writes lowercase subjects.")
-        if s["upper_ratio"] >= 0.8 and case == "lower":
+        if s["upper_ratio"] >= 0.8 and case == "lower" and _first_word(subject) in COMMON_VERBS:
             fails.append("Subject starts lowercase; this repo capitalises the first word.")
         ends_period = subject.endswith(".")
         if s["trailing_period_ratio"] <= 0.2 and ends_period:
@@ -167,10 +151,8 @@ def check(message: str, profile: dict | None = None, kind: str = "commit") -> Re
     return Result(not fails, fails, warns)
 
 
-ATTRIBUTION_LINE = re.compile(
-    r"^\s*(🤖.*|(co-authored-by|generated[- ]by|assisted[- ]by)\s*:.*\b(claude|copilot|chatgpt|gpt|openai|codex|gemini|cursor|windsurf|devin|aider|anthropic)\b.*|.*generated with (claude|copilot|chatgpt|codex|gemini|cursor|windsurf|aider).*)$",
-    re.I | re.M,
-)
+def _is_attribution_line(line: str) -> bool:
+    return bool(has_ai_attribution(line))
 
 
 def fix_message(message: str, profile: dict | None = None) -> str:
@@ -178,7 +160,7 @@ def fix_message(message: str, profile: dict | None = None) -> str:
     case, trailing period, and prefix habit. Narration, length and wording are left
     for the author; there is no safe automatic rewrite for those."""
     profile = profile or {"count": 0}
-    lines = [ln for ln in message.strip("\n").splitlines() if not ATTRIBUTION_LINE.match(ln)]
+    lines = [ln for ln in message.strip("\n").splitlines() if not _is_attribution_line(ln)]
     while lines and not lines[-1].strip():
         lines.pop()
     if not lines:
@@ -192,22 +174,26 @@ def fix_message(message: str, profile: dict | None = None) -> str:
             subject = subject.rstrip(".").rstrip()
         elif s["trailing_period_ratio"] >= 0.8 and not subject.endswith("."):
             subject = subject + "."
-        m = re.search(r"[A-Za-z]", _core(subject))
-        if m:
-            idx = subject.find(_core(subject)) + m.start()
+        case = first_word_case(subject)
+        if case:
+            core = _core(subject)
+            idx = subject.find(core)
             ch = subject[idx]
-            word = re.match(r"[A-Za-z][A-Za-z'-]*", subject[idx:]).group(0)
-            if not (word.isupper() and len(word) > 1):
-                if s["lower_ratio"] >= 0.8 and ch.isupper():
-                    subject = subject[:idx] + ch.lower() + subject[idx + 1:]
-                elif s["upper_ratio"] >= 0.8 and ch.islower():
-                    subject = subject[:idx] + ch.upper() + subject[idx + 1:]
+            if s["lower_ratio"] >= 0.8 and case == "upper":
+                subject = subject[:idx] + ch.lower() + subject[idx + 1:]
+            elif s["upper_ratio"] >= 0.8 and case == "lower" and _first_word(subject) in COMMON_VERBS:
+                subject = subject[:idx] + ch.upper() + subject[idx + 1:]
     out = [subject]
     if rest:
         if rest[0].strip():
             out.append("")
         out += rest
     return "\n".join(out).rstrip("\n")
+
+
+def _first_word(subject: str) -> str:
+    m = re.match(r"[^\W\d_][\w'-]*", _core(subject))
+    return m.group(0).lower() if m else ""
 
 
 def _core(subject: str) -> str:
@@ -246,8 +232,9 @@ def main(argv: list[str]) -> int:
     else:
         ap.error("give -m, -F FILE, a file path, --pr, or '-' for stdin")
 
-    # Ignore git's commented-out lines in COMMIT_EDITMSG.
-    message = "\n".join(ln for ln in message.splitlines() if not ln.startswith("#"))
+    # Git's COMMIT_EDITMSG carries commented-out lines; only those sources get stripped.
+    if a.file or a.source:
+        message = "\n".join(ln for ln in message.splitlines() if not ln.startswith("#"))
     profile = json.loads(Path(a.profile).read_text(encoding="utf-8")) if a.profile else profile_repo(a.repo)
     if a.fix:
         print(fix_message(message, profile))

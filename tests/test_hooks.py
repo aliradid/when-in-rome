@@ -65,7 +65,7 @@ class HookProcessTests(unittest.TestCase):
         reason = data["hookSpecificOutput"]["permissionDecisionReason"]
         self.assertIn("attribution", reason)
         self.assertIn("House style", reason)
-        self.assertIn("Real subjects", reason)
+        self.assertIn("Sample subjects", reason)
 
     def test_allows_native_commit(self):
         code, out = run_hook("pretooluse.py", {"tool_name": "Bash", "cwd": str(self.repo), "tool_input": {"command": 'git commit -m "fix retry loop"'}})

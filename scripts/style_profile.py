@@ -24,22 +24,40 @@ import sys
 from collections import Counter
 
 BOT_AUTHORS = re.compile(r"(dependabot|renovate|github-actions|\[bot\]|semantic-release|greenkeeper|snyk-bot|mergify)", re.I)
+AI_TOOLS = (
+    r"claude(?: code)?|(?:github )?copilot|chatgpt|gpt(?:-\d)?|openai|codex|gemini|cursor(?: agent)?|windsurf|devin|aider"
+    r"|cline|roo(?: code)?|kiro|jules|amp|augment(?: code)?|opencode|sweep(?: ai)?|kimi|qwen(?:-coder)?|anthropic|ai assistant"
+)
+AI_HOSTS = r"noreply@anthropic\.com|@cursor\.com|copilot@github\.com|noreply@openai\.com|\[bot\]"
+# A trailer that credits a tool: the tool must be the whole name, or the email a tool host.
 AI_TRAILER = re.compile(
-    r"^(co-authored-by|generated-by|assisted-by|generated with|made with|🤖)\s*:?.*\b(claude|copilot|chatgpt|openai|codex|gemini|cursor|windsurf|devin|aider|anthropic|ai)\b",
+    r"^[ \t]*(co-authored-by|signed-off-by|reviewed-by|helped-by|suggested-by|generated-by|assisted-by)[ \t]*:[ \t]*"
+    r"(?:(?:" + AI_TOOLS + r")[ \t]*(?:<[^>\n]*>)?[ \t]*$|[^<\n]*\[bot\][^<\n]*(?:<[^>\n]*>)?[ \t]*$|[^<\n]*<[^>\n]*(?:" + AI_HOSTS + r")[^>\n]*>)",
     re.I | re.M,
 )
+# Free-form attribution anywhere in the message.
+AI_FREEFORM = re.compile(
+    r"🤖|\bai[- ]generated\b|\b(generated|made|written|authored|produced|assisted|created|co-written)[ \t]+(with|by)[ \t]+(?:the[ \t]+)?(?:help[ \t]+of[ \t]+)?(?:" + AI_TOOLS + r"|ai)\b",
+    re.I,
+)
+MAX_SCAN = 8000  # characters of a message that regexes look at
+
+
+def has_ai_attribution(text: str):
+    text = text[:MAX_SCAN]
+    return AI_TRAILER.search(text) or AI_FREEFORM.search(text)
 CONVENTIONAL = re.compile(r"^(feat|fix|chore|docs|refactor|test|tests|ci|build|perf|style|revert|hotfix|wip)(\([^)]*\))?!?:\s", re.I)
 OTHER_PREFIX = re.compile(r"^[A-Za-z][A-Za-z0-9_./-]{1,24}:\s")
 BRACKET_TAG = re.compile(r"^\[[^\]]{1,30}\]\s")
 TICKET = re.compile(r"\b[A-Z][A-Z0-9]{1,9}-\d+\b")
 ISSUE_REF = re.compile(r"(^|\s)#\d+\b")
-EMOJI = re.compile(r"[\U0001F300-\U0001FAFF☀-➿]|:[a-z_]+:")
+EMOJI = re.compile(r"[\U0001F300-\U0001FAFF\u2600-\u2712\u2715\u2716\u2719-\u27BF]|(?<![:\w]):[a-z_]+:(?![:\w])")
 PAST_TENSE = re.compile(r"^(added|fixed|updated|removed|changed|moved|renamed|refactored|improved|implemented|merged|bumped|cleaned|deleted|replaced|reverted|made|created|dropped|switched|migrated|upgraded|tweaked|adjusted|corrected|introduced|extracted)\b", re.I)
 GERUND = re.compile(r"^\w+ing\b", re.I)
 WORD = re.compile(r"[A-Za-z][A-Za-z'-]*")
 # Messages git or common tooling writes for you. Excluded from the profile and
 # never judged against it.
-GENERATED = re.compile(r"^(Merge |Revert \"|Revert '|fixup! |squash! |amend! |Squashed commit|Initial commit$|Apply suggestions? from code review|Update [\w./-]+\.(md|txt|yml|yaml|json)$)", re.I)
+GENERATED = re.compile(r"^(Merge |Revert \"|Revert '|Reapply \"|fixup! |squash! |amend! |Squashed commit|Initial commit$|Apply suggestions? from code review|Update [\w./-]+\.(md|txt|yml|yaml|json)$)", re.I)
 
 
 def _strip_prefix(subject: str) -> str:
@@ -52,15 +70,35 @@ def _strip_prefix(subject: str) -> str:
     return s.strip()
 
 
-def _case(subject: str) -> str:
+def first_word_case(subject: str):
+    """'upper', 'lower', or None when the first word carries its own casing
+    (iOS, GitHub, npm-ish identifiers, numbers, all-caps acronyms)."""
     core = _strip_prefix(subject)
-    m = WORD.search(core)
+    m = re.match(r"([^\W\d_][\w'-]*)", core)
     if not m:
-        return "other"
-    w = m.group(0)
-    if w.isupper() and len(w) > 1:
-        return "other"
+        return None
+    w = m.group(1)
+    if not w[0].isalpha():
+        return None
+    if any(ch.isdigit() for ch in w) or (w.isupper() and len(w) > 1) or any(ch.isupper() for ch in w[1:]):
+        return None
     return "upper" if w[0].isupper() else "lower"
+
+
+# First words a person would capitalise in a sentence-case repo. A lowercase first
+# word outside this list (npm, iOS, kubectl) is an identifier, not a style slip.
+COMMON_VERBS = set("""add adds added fix fixes fixed update updates remove removes bump use make move rename drop
+handle allow avoid clean cleanup refactor improve support implement change set revert merge tidy replace delete
+document test check prevent reduce speed simplify split extract upgrade migrate tweak adjust correct introduce
+ensure enable disable convert cache log show hide wrap sort filter parse validate return restore keep stop start
+run build release prepare initial first minor more some small various switch include exclude expose rework
+rewrite unify align normalize skip retry limit guard treat mark print read write load save send fetch pass
+fail catch throw raise emit return apply bring pin unpin lower raise widen narrow tighten loosen turn let let's
+don't do only also try""".split())
+
+
+def _case(subject: str) -> str:
+    return first_word_case(subject) or "other"
 
 
 def _tense(subject: str) -> str:
@@ -76,11 +114,11 @@ def _ratio(n: int, total: int) -> float:
     return round(n / total, 3) if total else 0.0
 
 
-def git_commits(repo: str, limit: int) -> list[dict]:
+def git_commits(repo: str, limit: int, ref: str | None = None) -> list[dict]:
     fmt = "%H%x1f%an%x1f%s%x1f%b%x1e"
     try:
         out = subprocess.run(
-            ["git", "-C", repo, "log", "--no-merges", f"-n{limit}", f"--format={fmt}"],
+            ["git", "-C", repo, "log", "--no-merges", f"-n{limit}", f"--format={fmt}"] + ([ref] if ref else []),
             capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30,
         )
     except (OSError, subprocess.TimeoutExpired):
@@ -95,7 +133,7 @@ def git_commits(repo: str, limit: int) -> list[dict]:
         parts = rec.split("\x1f")
         if len(parts) < 4:
             continue
-        sha, author, subject, body = parts[0].strip(), parts[1], parts[2].strip(), parts[3].strip()
+        sha, author, subject, body = parts[0].strip(), parts[1], parts[2].strip()[:1000], parts[3].strip()[:MAX_SCAN]
         commits.append({"sha": sha, "author": author, "subject": subject, "body": body})
     return commits
 
@@ -193,9 +231,9 @@ def profile_subjects(subjects: list[str], bodies: list[str] | None = None, branc
     return prof
 
 
-def profile_repo(repo: str = ".", limit: int = 300) -> dict:
-    commits = git_commits(repo, limit)
-    human = [c for c in commits if not BOT_AUTHORS.search(c["author"]) and not AI_TRAILER.search(c["body"])
+def profile_repo(repo: str = ".", limit: int = 300, ref: str | None = None) -> dict:
+    commits = git_commits(repo, limit, ref)
+    human = [c for c in commits if not BOT_AUTHORS.search(c["author"]) and not has_ai_attribution(c["body"])
              and not GENERATED.match(c["subject"])]
     excluded = len(commits) - len(human)
     prof = profile_subjects([c["subject"] for c in human], [c["body"] for c in human], git_branches(repo))
