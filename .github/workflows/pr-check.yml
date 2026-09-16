@@ -1,0 +1,14 @@
+name: pull request check
+
+on: [pull_request]
+
+jobs:
+  when-in-rome:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./
+        with:
+          hard-only: "false"
