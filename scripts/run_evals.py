@@ -97,6 +97,8 @@ def make_repo(subjects: list[str]) -> Path:
     env = dict(os.environ, GIT_AUTHOR_NAME="Dev One", GIT_AUTHOR_EMAIL="dev@example.com",
                GIT_COMMITTER_NAME="Dev One", GIT_COMMITTER_EMAIL="dev@example.com")
     subprocess.run(["git", "init", "-q", "-b", "main", str(d)], check=True, env=env)
+    subprocess.run(["git", "-C", str(d), "config", "user.name", "Dev One"], check=True)
+    subprocess.run(["git", "-C", str(d), "config", "user.email", "dev@example.com"], check=True)
     (d / "client.py").write_text("import urllib.request\n\ndef get(url):\n    return urllib.request.urlopen(url).read()\n")
     for i, s in enumerate(subjects):
         (d / f"note{i}.txt").write_text(f"{i}\n")
